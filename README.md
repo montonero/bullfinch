@@ -49,7 +49,8 @@ Other approuch would have been to use Arc<Mutex<>> queue to append new links for
 ## Improvements
 Immediate issues that should be addressed:
 
-* Logging - use slog instead of println
+* Adhere to robots exclusion standard (robots.txt)
+* Logging - use slog instead of println. Verbosity levels.
 * Error handling - close to none at the moment. Need to define our own error type and wrap all other errors[^2].
 * Persistency - serialize and save visited links to disk
 
