@@ -41,7 +41,7 @@ Currently there is just a single binary that serves as a command line interface 
 
 Visited links are stored in a HashSet, although Bloom filter might be a better choice[^1].
 Main thread checks whether the link that we encounter has been visited, if not it is sent to worker threads. Communication is implemented using crossbeam-channel.
-Other approuch would have been to use Arc<Mutex<>> queue to append new links for fetching.
+Other approach would have been to use Arc<Mutex<>> queue to append new links for fetching.
 
 ### Planned
 ![](info/architecture_goal.png)
@@ -49,7 +49,8 @@ Other approuch would have been to use Arc<Mutex<>> queue to append new links for
 ## Improvements
 Immediate issues that should be addressed:
 
-* Logging - use slog instead of println
+* Adhere to robots exclusion standard (robots.txt)
+* Logging - use slog instead of println. Verbosity levels.
 * Error handling - close to none at the moment. Need to define our own error type and wrap all other errors[^2].
 * Persistency - serialize and save visited links to disk
 
