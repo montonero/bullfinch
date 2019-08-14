@@ -46,7 +46,6 @@ fn main() -> Result<(), BfError> {
 
     let verbose = match matches.occurrences_of("VERBOSITY") {
         0 => false,
-        1 => true,
         _ => true
     };
 
@@ -64,15 +63,13 @@ fn main() -> Result<(), BfError> {
             let dep = usize::from_str(&dep).unwrap();
             crawler.crawl_depth = dep;
 
-            println!("Starting to clawl!");
+            println!("Starting to crawl!");
             crawler.start();
 
             println!("Crawled the following links:");
             for l in crawler.visited {
                 println!("{}", l.to_string());
             }
-
-            //store.set(key.to_string(), val.to_string())?;
             Ok(())
         }
         _ => Ok(()),
