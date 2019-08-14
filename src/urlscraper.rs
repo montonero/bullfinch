@@ -60,10 +60,6 @@ mod tests {
     use crate::urlscraper::UrlScraper;
     use reqwest::Url;
 
-    #[test]
-    fn it_works2() {
-        assert_eq!(2 + 2, 4);
-    }
 
     #[test]
     fn urlscraper_parse_link_single() {
