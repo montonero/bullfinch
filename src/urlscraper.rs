@@ -1,7 +1,7 @@
 use reqwest::Url;
 use scraper::{html::Select, Html, Selector};
 
-use crate::error::BfError;
+use crate::errors::BfError;
 
 /// A wrapper over scraper::Html etc that selects only links
 pub struct UrlScraper {
@@ -54,12 +54,10 @@ impl<'a, 'b> Iterator for UrlIter<'a, 'b> {
     }
 }
 
-
 #[cfg(test)]
 mod tests {
     use crate::urlscraper::UrlScraper;
     use reqwest::Url;
-
 
     #[test]
     fn urlscraper_parse_link_single() {

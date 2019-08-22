@@ -1,4 +1,4 @@
-use bullfinch::error::BfError;
+use bullfinch::errors::BfError;
 use bullfinch::Crawler;
 
 fn main() -> Result<(), BfError> {
@@ -13,7 +13,7 @@ fn main() -> Result<(), BfError> {
     crawler.start();
     println!(
         "Found {} unique links (at a depth level {}).",
-        crawler.visited.len(),
+        crawler.visited.lock().unwrap().len(),
         crawler.crawl_depth
     );
     Ok(())

@@ -1,7 +1,7 @@
-use bullfinch::error::BfError;
+use bullfinch::errors::BfError;
 use bullfinch::Crawler;
-use std::str::FromStr;
 use clap::{App, AppSettings, Arg, SubCommand};
+use std::str::FromStr;
 
 fn main() -> Result<(), BfError> {
     let matches = App::new(env!("CARGO_PKG_NAME"))
@@ -15,8 +15,7 @@ fn main() -> Result<(), BfError> {
             Arg::with_name("VERBOSITY")
                 .short("v")
                 .multiple(true)
-                .help("Sets the level of verbosity")
-
+                .help("Sets the level of verbosity"),
         )
         .subcommand(
             SubCommand::with_name("links")
@@ -46,17 +45,19 @@ fn main() -> Result<(), BfError> {
 
     let verbose = match matches.occurrences_of("VERBOSITY") {
         0 => false,
-        _ => true
+        _ => true,
     };
-
-
 
     match matches.subcommand() {
         ("links", Some(matches_)) => {
-            let domain: String = matches_.value_of("DOMAIN").expect("Domain not supplied").to_string();
+            let domain: String = matches_
+                .value_of("DOMAIN")
+                .expect("Domain not supplied")
+                .to_string();
             let dep = matches_
                 .value_of("DEPTH")
-                .expect("Crawling depth not supplied").to_string();
+                .expect("Crawling depth not supplied")
+                .to_string();
 
             let mut crawler = Crawler::new(&domain)?;
             crawler.verbose_log = verbose;
@@ -64,12 +65,18 @@ fn main() -> Result<(), BfError> {
             crawler.crawl_depth = dep;
 
             println!("Starting to crawl!");
+            // This does not block. Crawling started in another thread.
             crawler.start();
 
+            // Wait to see what crawler has crawled
+            std::thread::sleep(std::time::Duration::from_secs(1));
+
             println!("Crawled the following links:");
-            for l in crawler.visited {
+            let visited = &*crawler.visited.lock().unwrap();
+            for l in visited {
                 println!("{}", l.to_string());
             }
+
             Ok(())
         }
         _ => Ok(()),
