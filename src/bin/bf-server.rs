@@ -2,7 +2,7 @@
 //extern crate json;
 
 use actix_web::{web, App, HttpResponse, HttpServer, Result};
-use serde::{Deserialize, Serialize};
+use serde::{Deserialize};
 //use failure::Fail;
 //use json::JsonValue;
 use std::collections::HashMap;

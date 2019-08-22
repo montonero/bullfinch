@@ -3,7 +3,7 @@ extern crate crossbeam_channel;
 use reqwest::header::*;
 use reqwest::{Client, Url};
 use std::collections::HashSet;
-use std::sync::atomic::{AtomicBool, Ordering};
+use std::sync::atomic::{AtomicBool, Ordering, AtomicUsize};
 use std::sync::{Arc, Mutex};
 use std::thread;
 use std::time::Duration;
@@ -84,22 +84,28 @@ impl Crawler {
 
         // Flag to signal worker threads to shut down
         let shutdown = Arc::new(AtomicBool::new(false));
-
-        for _ in 0..self.num_fetchers {
+        // Keep track of idle workers. We shall shutdown only if all have completed.
+        let num_workers_idle = Arc::new(AtomicUsize::new(0));
+        let num_fetchers = self.num_fetchers;
+        for _ in 0..num_fetchers {
             let worker_rx = worker_rx.clone();
             let master_tx = master_tx.clone();
             let client = Arc::clone(&client_);
             let domain = self.domain.clone();
             let shutdown = Arc::clone(&shutdown);
             let max_depth = self.crawl_depth;
+            let num_workers = Arc::clone(&num_workers_idle);
 
             thread::spawn(move || {
+                num_workers.fetch_add(1, Ordering::SeqCst);
                 for (depth, url) in worker_rx {
+                    num_workers.fetch_sub(1, Ordering::SeqCst);
                     if shutdown.load(Ordering::SeqCst) {
                         println!("Worker thread shutting down.");
                         break;
                     }
                     if depth >= max_depth {
+                        num_workers.fetch_add(1, Ordering::SeqCst);
                         continue;
                     }
 
@@ -107,6 +113,7 @@ impl Crawler {
                         Ok(head) => head,
                         Err(err) => {
                             println!("Error in getting head of {} : {}", url.as_str(), err);
+                            num_workers.fetch_add(1, Ordering::SeqCst);
                             continue;
                         }
                     };
@@ -134,6 +141,8 @@ impl Crawler {
                             }
                         }
                     }
+
+                    num_workers.fetch_add(1, Ordering::SeqCst);
                 }
             });
         }
@@ -141,19 +150,18 @@ impl Crawler {
         let visited = Arc::clone(&self.visited);
         let crawl_depth = self.crawl_depth;
         let domain_url = self.domain_url.clone();
+        let num_workers = num_workers_idle.clone();
         thread::spawn(move || {
             while !shutdown.load(Ordering::SeqCst) {
                 let (depth, url) = match master_rx.try_recv() {
                     Ok((depth, url)) => (depth, url),
                     Err(_err) => {
-                        // TODO
-                        // since worker threads might be working give them a chance to complete
-                        thread::sleep(Duration::from_millis(2_000));
+                        thread::sleep(Duration::from_millis(1_000));
                         //println!("Error receiving {}", err);
                         // If all channels are empty then there is no work to be done
-                        if worker_tx.is_empty() && worker_rx.is_empty() && master_rx.is_empty() {
+                        if worker_tx.is_empty() && worker_rx.is_empty() 
+                        && master_rx.is_empty() && num_workers.load(Ordering::SeqCst) == num_fetchers {
                             shutdown.store(true, Ordering::SeqCst);
-                            // FIXME worker threads might still be stuck in loading data
                             println!("No more work to do. Shutting down.");
                         }
                         continue;
@@ -169,7 +177,8 @@ impl Crawler {
                     continue;
                 }
 
-                // Remove fragment from url
+                // Remove '#' fragments from url
+                // to make sure that we don't store page.hml and page.html#abc as separate entries
                 let mut url_f = url.clone();
                 url_f.set_fragment(None);
                 if visited.lock().unwrap().contains(&url_f) {
