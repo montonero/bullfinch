@@ -3,7 +3,7 @@ extern crate crossbeam_channel;
 use reqwest::header::*;
 use reqwest::{Client, Url};
 use std::collections::HashSet;
-use std::sync::atomic::{AtomicBool, Ordering, AtomicUsize};
+use std::sync::atomic::{AtomicBool, AtomicUsize, Ordering};
 use std::sync::{Arc, Mutex};
 use std::thread;
 use std::time::Duration;
@@ -159,8 +159,11 @@ impl Crawler {
                         thread::sleep(Duration::from_millis(1_000));
                         //println!("Error receiving {}", err);
                         // If all channels are empty then there is no work to be done
-                        if worker_tx.is_empty() && worker_rx.is_empty() 
-                        && master_rx.is_empty() && num_workers.load(Ordering::SeqCst) == num_fetchers {
+                        if worker_tx.is_empty()
+                            && worker_rx.is_empty()
+                            && master_rx.is_empty()
+                            && num_workers.load(Ordering::SeqCst) == num_fetchers
+                        {
                             shutdown.store(true, Ordering::SeqCst);
                             println!("No more work to do. Shutting down.");
                         }

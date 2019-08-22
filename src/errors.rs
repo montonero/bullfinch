@@ -37,7 +37,9 @@ impl fmt::Display for BfError {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match *self {
             BfError::UrlError(err) => write!(f, "(UrlError {})", err.to_string()),
-            BfError::DomainNotRegistered(domain_id)  => write!(f, "(Domain Not Registered. Domain id: {})", domain_id),
+            BfError::DomainNotRegistered(domain_id) => {
+                write!(f, "(Domain Not Registered. Domain id: {})", domain_id)
+            }
             _ => write!(f, "(Other bullfinch error)"),
         }
     }

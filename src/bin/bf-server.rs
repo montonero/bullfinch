@@ -1,16 +1,9 @@
-//#[macro_use]
-//extern crate json;
-
 use actix_web::{web, App, HttpResponse, HttpServer, Result};
-use serde::{Deserialize};
-//use failure::Fail;
-//use json::JsonValue;
-use std::collections::HashMap;
-use std::sync::{Mutex};
-
-
 use bullfinch::errors::BfError;
 use bullfinch::Crawler;
+use serde::Deserialize;
+use std::collections::HashMap;
+use std::sync::Mutex;
 
 #[derive(Deserialize, Debug)]
 enum CrawlRequest {
@@ -37,36 +30,40 @@ struct AppState {
 fn get_domains(state: web::Data<AppState>) -> Result<HttpResponse, BfError> {
     let flock_domains = &*state.flock_domains.lock().unwrap();
     //println!("domains: {:?}", flock_domains);
-    Ok(HttpResponse::Ok().json(flock_domains)) 
+    Ok(HttpResponse::Ok().json(flock_domains))
 }
 
-fn get_num_visited(domain_id: web::Path<u32>, state: web::Data<AppState>) -> Result<HttpResponse, BfError> {
+fn get_num_visited(
+    domain_id: web::Path<u32>,
+    state: web::Data<AppState>,
+) -> Result<HttpResponse, BfError> {
     let flock = state.flock.lock().unwrap();
     match flock.get(&*domain_id) {
         Some(domain) => {
             let visited = &*domain.visited.lock().unwrap();
             Ok(HttpResponse::Ok().json(visited.len()))
-        },
-        None => Err(BfError::DomainNotRegistered(*domain_id))
+        }
+        None => Err(BfError::DomainNotRegistered(*domain_id)),
     }
 }
 
-
-fn get_visited(domain_id: web::Path<u32>, state: web::Data<AppState>) -> Result<HttpResponse, BfError> {
+fn get_visited(
+    domain_id: web::Path<u32>,
+    state: web::Data<AppState>,
+) -> Result<HttpResponse, BfError> {
     let flock = state.flock.lock().unwrap();
     match flock.get(&*domain_id) {
         Some(domain) => {
             let visited = &*domain.visited.lock().unwrap();
             // Create a set of visited domains
-            // TODO could cache this 
-            let vis_str: std::collections::HashSet<String> = visited.iter().map(|url| url.to_string()).collect();
+            // TODO could cache this
+            let vis_str: std::collections::HashSet<String> =
+                visited.iter().map(|url| url.to_string()).collect();
             Ok(HttpResponse::Ok().json(vis_str))
         }
-        None => Err(BfError::DomainNotRegistered(*domain_id))
+        None => Err(BfError::DomainNotRegistered(*domain_id)),
     }
-
 }
-
 
 fn main() -> Result<(), BfError> {
     println!("Server starting.");
@@ -77,10 +74,10 @@ fn main() -> Result<(), BfError> {
         .lock()
         .unwrap()
         .insert(1, Crawler::new("http://google.com")?);
-    domains
-        .lock()
-        .unwrap()
-        .insert(2, Crawler::new("https://www.dailymail.co.uk/home/index.html")?);
+    domains.lock().unwrap().insert(
+        2,
+        Crawler::new("https://www.dailymail.co.uk/home/index.html")?,
+    );
 
     // Start crawling for all registered domains
     for domain in domains.lock().unwrap().values_mut() {
@@ -89,11 +86,17 @@ fn main() -> Result<(), BfError> {
 
     let domains_str = Mutex::new(HashMap::new());
     for (id, crawler) in &*domains.lock().unwrap() {
-        domains_str.lock().unwrap().insert(*id, crawler.domain.clone());
+        domains_str
+            .lock()
+            .unwrap()
+            .insert(*id, crawler.domain.clone());
     }
 
     // Shared Actix App state
-    let app_data = web::Data::new(AppState { flock: domains, flock_domains: domains_str });
+    let app_data = web::Data::new(AppState {
+        flock: domains,
+        flock_domains: domains_str,
+    });
 
     HttpServer::new(move || {
         App::new()
