@@ -7,6 +7,7 @@
 Bullfinch is an extremely simple web crawler written in Rust for learning purposes.
 
 ## Use
+To run command line client:
 
 ```
 cargo run --bin bf-client -- -v links  http://www.google.com 1
@@ -39,11 +40,15 @@ fn main() -> Result<(), BfError> {
 Currently there is just a single binary that serves as a command line interface (CLI) and a scraper.
 ![](info/architecture_initial.png)
 
+Web interface is not implemented yet.
+
 Visited links are stored in a HashSet, although Bloom filter might be a better choice[^1].
 Main thread checks whether the link that we encounter has been visited, if not it is sent to worker threads. Communication is implemented using crossbeam-channel.
 Other approach would have been to use Arc<Mutex<>> queue to append new links for fetching.
 
 ### Planned
+
+In the future it will roughly look like this:
 ![](info/architecture_goal.png)
 
 ## Improvements
