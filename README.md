@@ -55,10 +55,10 @@ fn main() -> Result<(), BfError> {
 
 ## Architecture
 ### Current
-Currently there is just a single binary that serves as a command line interface (CLI) and a scraper.
+Currently there is just a single binary that serves as a command line interface (CLI)
 ![](info/architecture_initial.png)
 
-Web interface is not implemented yet.
+Web interface is implemented also as a single binary using actix_web.
 
 Visited links are stored in a HashSet, although Bloom filter might be a better choice[^1].
 Main thread checks whether the link that we encounter has been visited, if not it is sent to worker threads. Communication is implemented using crossbeam-channel.
