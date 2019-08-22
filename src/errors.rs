@@ -27,6 +27,13 @@ impl From<clap::Error> for BfError {
     }
 }
 
+
+impl From<io::Error> for BfError {
+    fn from(e: io::Error) -> BfError {
+        BfError::Io(e)
+    }
+}
+
 impl error::ResponseError for BfError {
     fn error_response(&self) -> HttpResponse {
         HttpResponse::new(http::StatusCode::BAD_REQUEST)

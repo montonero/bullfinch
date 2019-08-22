@@ -105,8 +105,7 @@ fn main() -> Result<(), BfError> {
             .route("/api/v1/num/{domain_id}", web::get().to(get_num_visited))
             .route("/api/v1/domains", web::get().to(get_domains))
     })
-    .bind("127.0.0.1:8088")
-    .unwrap()
+    .bind("127.0.0.1:8088")?
     .run()
     .unwrap();
 
