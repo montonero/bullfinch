@@ -26,6 +26,10 @@ Get links for a given domain id:
 Get number of visited pages for a given domain id:
 "/api/v1/num/{domain_id}"
 ```
+Example use:
+```
+curl -i -H "Accept: application/json" "127.0.0.1:8088/api/v1/links/1"
+```
 There is a helper script at misc/client.py that makes requests to these endpoints.
 
 ## Example
